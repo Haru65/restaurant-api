@@ -1,0 +1,20 @@
+{
+  "name": "restaurant-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs",
+    "dev": "node --watch index.mjs",
+    "check": "node --check index.mjs && node --check schema.mjs && node --check middleware/auth.mjs && node --check middleware/upload.mjs && node --check routes/auth.mjs && node --check routes/menu.mjs && node --check routes/tables.mjs && node --check routes/orders.mjs && node --check routes/reservations.mjs && node --check routes/deliveries.mjs && node --check routes/misc.mjs && node --check routes/recipes.mjs && node --check routes/unified-superadmin.mjs && node --check routes/superadmin.mjs && node --check services/printer.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.9.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.20.0"
+  }
+}
