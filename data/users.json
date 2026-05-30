@@ -1,0 +1,98 @@
+[
+  {
+    "id": 1,
+    "name": "Super Admin",
+    "email": "superadmin@logdine.local",
+    "password": "super123",
+    "role": "superadmin",
+    "restaurant_id": null,
+    "restaurant_name": null,
+    "is_active": true,
+    "must_change_password": false
+  },
+  {
+    "id": 2,
+    "name": "Admin User",
+    "email": "admin@example.com",
+    "password": "admin123",
+    "role": "admin",
+    "restaurant_id": 1,
+    "restaurant_name": "Demo Restaurant",
+    "is_active": true,
+    "must_change_password": false
+  },
+  {
+    "id": 3,
+    "name": "Manager User",
+    "email": "manager@example.com",
+    "password": "manager123",
+    "role": "manager",
+    "restaurant_id": 1,
+    "restaurant_name": "Demo Restaurant",
+    "is_active": true,
+    "must_change_password": false
+  },
+  {
+    "id": 5,
+    "name": "SS Manager",
+    "email": "ss",
+    "password": "ss",
+    "role": "manager",
+    "restaurant_id": 1,
+    "restaurant_name": "Demo Restaurant",
+    "is_active": true,
+    "must_change_password": false
+  },
+  {
+    "id": 6,
+    "name": "shoheb",
+    "email": "shohebkhan@123",
+    "password": "sujal111",
+    "role": "manager",
+    "restaurant_id": 2,
+    "restaurant_name": "Dosti cafe",
+    "is_active": true,
+    "must_change_password": true
+  },
+  {
+    "id": 7,
+    "name": "jugal",
+    "email": "jugalpatne125@gmail.com",
+    "password": "jugal123",
+    "role": "staff",
+    "restaurant_id": 2,
+    "restaurant_name": "Dosti cafe",
+    "is_active": true,
+    "must_change_password": true
+  },
+  {
+    "id": 3,
+    "name": "sujal",
+    "email": "sujalpatne05@gmail.com",
+    "password": "sujal222",
+    "role": "admin",
+    "restaurant_id": 2,
+    "restaurant_name": "Dosti cafe",
+    "is_active": true
+  },
+  {
+    "id": 4,
+    "name": "mukesh",
+    "email": "sujalpatne583@gmail.com",
+    "password": "sujal111",
+    "role": "manager",
+    "restaurant_id": 2,
+    "restaurant_name": "Dosti cafe",
+    "is_active": true
+  },
+  {
+    "id": 5,
+    "name": "jupan",
+    "email": "sujalpatne@gmail.com",
+    "password": "sujal111",
+    "role": "staff",
+    "restaurant_id": 2,
+    "restaurant_name": "Dosti cafe",
+    "is_active": true
+  }
+]
