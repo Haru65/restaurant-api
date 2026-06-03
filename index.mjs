@@ -14,11 +14,12 @@ import recipesRoutes from './routes/recipes.mjs';
 import unifiedSuperadminRoutes from './routes/unified-superadmin.mjs';
 import superadminRoutes from './routes/superadmin.mjs';
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const app = express();
 const PORT = Number(process.env.PORT || 5002);
 const HOST = process.env.HOST || '0.0.0.0';
+let server;
 const configuredOrigins = String(process.env.CORS_ORIGIN || '*')
   .split(',')
   .map(origin => origin.trim())
@@ -68,11 +69,41 @@ app.use((err, req, res, next) => {
 // Start
 setupSchema()
   .then(() => {
-    app.listen(PORT, HOST, () => {
+    server = app.listen(PORT, HOST, () => {
       console.log(`[SERVER] Restaurant API running on http://${HOST}:${PORT}`);
+    });
+    server.on('error', (err) => {
+      console.error('[SERVER] HTTP server error:', err.message);
+      process.exit(1);
+    });
+    server.on('close', () => {
+      console.warn('[SERVER] HTTP server closed');
     });
   })
   .catch(err => {
     console.error('[SERVER] Failed to setup schema:', err.message);
     process.exit(1);
   });
+
+const shutdown = (signal) => {
+  console.warn(`[SERVER] ${signal} received, shutting down`);
+  if (!server) process.exit(0);
+  server.close(() => process.exit(0));
+};
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('beforeExit', (code) => {
+  console.warn(`[SERVER] beforeExit code=${code}. Active handles=${process._getActiveHandles().length}`);
+});
+process.on('exit', (code) => {
+  console.warn(`[SERVER] exit code=${code}`);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[SERVER] uncaughtException:', err);
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[SERVER] unhandledRejection:', reason);
+  process.exit(1);
+});

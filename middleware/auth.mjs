@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({ quiet: true });
 
 export function authenticate(req, res, next) {
   const internalToken = req.headers['x-logdine-internal-token'];
