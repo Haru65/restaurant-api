@@ -450,12 +450,19 @@ router.post('/superadmin/tenants', ...sa, handle('create tenant', async (req, re
     phone,
     ownerName = req.body.owner,
     ownerEmail,
+    adminName = ownerName,
+    adminEmail = ownerEmail,
+    adminPassword = req.body.temporaryPassword,
     logo,
     logoUrl,
     plan = 'Standard'
   } = req.body;
   if (!name || !ownerName) throw httpError(400, 'name and ownerName are required');
   if (ownerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail)) throw httpError(400, 'Invalid owner email');
+  if (adminEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail)) throw httpError(400, 'Invalid admin email');
+  if (adminPassword && String(adminPassword).length < 8) throw httpError(400, 'Admin password must be at least 8 characters');
+  if (adminPassword && (!adminName || !adminEmail)) throw httpError(400, 'adminName and adminEmail are required when adminPassword is provided');
+  if (adminEmail && (await query(`SELECT id FROM users WHERE LOWER(email)=LOWER($1)`, [adminEmail])).rows[0]) throw httpError(409, 'User with this email already exists');
   const slug = await uniqueSlug(req.body.slug, name);
   const uploadedLogo = logo ? await uploadBase64Image(logo, 'logdine/logos') : logoUrl || null;
   const { rows } = await query(`
@@ -480,7 +487,25 @@ router.post('/superadmin/tenants', ...sa, handle('create tenant', async (req, re
     number(req.body.subscription?.gracePeriodDays),
     req.body.subscription?.mrr || null
   ]);
-  res.status(201).json(await findTenant(created.id));
+
+  let adminId = null;
+  if (adminPassword) {
+    const admin = await query(`
+      INSERT INTO users (name, email, password_hash, role, restaurant_id, restaurant_name, is_active, must_change_password, temp_password)
+      VALUES ($1,$2,$3,'admin',$4,$5,TRUE,TRUE,$6)
+      RETURNING id
+    `, [
+      String(adminName).trim(),
+      String(adminEmail).toLowerCase().trim(),
+      await bcrypt.hash(String(adminPassword), 10),
+      created.id,
+      created.name,
+      String(adminPassword)
+    ]);
+    adminId = admin.rows[0].id;
+  }
+
+  res.status(201).json({ ...(await findTenant(created.id)), adminId });
 }));
 
 router.put('/superadmin/tenants/:id', ...sa, handle('update tenant', async (req, res) => {
