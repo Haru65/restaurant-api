@@ -17,7 +17,7 @@ import superadminRoutes from './routes/superadmin.mjs';
 dotenv.config();
 
 const app = express();
-const PORT = Number(process.env.PORT || 5001);
+const PORT = Number(process.env.PORT || 5002);
 const HOST = process.env.HOST || '0.0.0.0';
 const configuredOrigins = String(process.env.CORS_ORIGIN || '*')
   .split(',')

@@ -3,6 +3,22 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export function authenticate(req, res, next) {
+  const internalToken = req.headers['x-logdine-internal-token'];
+  if (
+    process.env.LOGDINE_INTERNAL_API_TOKEN &&
+    internalToken &&
+    internalToken === process.env.LOGDINE_INTERNAL_API_TOKEN
+  ) {
+    req.user = {
+      id: 'logdine-superadmin-backend',
+      email: 'system@logdine.internal',
+      role: 'superadmin',
+      restaurantId: null,
+      internal: true
+    };
+    return next();
+  }
+
   const auth = req.headers.authorization || '';
   if (!auth.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'No token provided' });
