@@ -5,6 +5,13 @@ import net from 'net';
  * Each restaurant has its own printer IPs configured
  */
 
+const isPrinterEnabled = () => String(process.env.PRINTER_ENABLED || '').toLowerCase() === 'true';
+
+const disabledPrinterResult = (type) => {
+  console.log(`Printer disabled - skipping ${type} print. Set PRINTER_ENABLED=true to send jobs to configured printers.`);
+  return { success: true, skipped: true, reason: 'PRINTER_ENABLED is not true' };
+};
+
 export const printerService = {
   /**
    * Print Kitchen Order Ticket (KoT) to kitchen printer
@@ -14,9 +21,8 @@ export const printerService = {
    */
   printKoT: async (order, restaurant) => {
     try {
-      if (!process.env.PRINTER_ENABLED || process.env.PRINTER_ENABLED !== 'true') {
-        console.log('Printer disabled - skipping KoT print');
-        return { success: true, skipped: true };
+      if (!isPrinterEnabled()) {
+        return disabledPrinterResult('KoT');
       }
 
       if (!restaurant.kitchen_printer_ip || !restaurant.kitchen_printer_port) {
@@ -47,9 +53,8 @@ export const printerService = {
    */
   printBill: async (order, payment, restaurant) => {
     try {
-      if (!process.env.PRINTER_ENABLED || process.env.PRINTER_ENABLED !== 'true') {
-        console.log('Printer disabled - skipping Bill print');
-        return { success: true, skipped: true };
+      if (!isPrinterEnabled()) {
+        return disabledPrinterResult('Bill');
       }
 
       if (!restaurant.counter_printer_ip || !restaurant.counter_printer_port) {

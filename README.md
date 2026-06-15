@@ -15,6 +15,10 @@ From `hotel/`, `npm run backend` starts this service. The hotel tenant-isolation
 
 For Render deployment, use `render.yaml` with `restaurant-api` as the service root and set the secret environment variables in the Render dashboard. Render supplies `PORT` automatically.
 
+## Printer Setup
+
+KOT and bill printing are disabled unless `PRINTER_ENABLED=true` is set in the running backend environment. Each restaurant must also have `kitchen_printer_ip` and `kitchen_printer_port` configured in the `restaurants` table before KOT jobs can reach the kitchen printer.
+
 ## Main Route Groups
 
 - Restaurant operations: `/auth`, `/profile`, `/menu`, `/tables`, `/orders`, `/reservations`, `/deliveries`
