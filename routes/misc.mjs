@@ -267,7 +267,8 @@ router.delete('/staff/:id', authenticate, async (req, res) => {
 router.get('/settings', authenticate, async (req, res) => {
   try {
     const { rows } = await query(
-      `SELECT name, owner, city, logo_url, tax_rate, service_charge, default_delivery_partner, table_sections
+      `SELECT name, owner, city, logo_url, tax_rate, service_charge, default_delivery_partner, table_sections,
+              kitchen_printer_ip, kitchen_printer_port, counter_printer_ip, counter_printer_port
        FROM restaurants WHERE id=$1`,
       [req.user.restaurantId]
     );
@@ -282,19 +283,44 @@ router.get('/settings', authenticate, async (req, res) => {
       service_charge: Number(r.service_charge ?? 0),
       default_delivery_partner: r.default_delivery_partner || 'in-house',
       table_sections: Array.isArray(r.table_sections) ? r.table_sections : [],
+      kitchen_printer_ip: r.kitchen_printer_ip || '',
+      kitchen_printer_port: Number(r.kitchen_printer_port ?? 9100),
+      counter_printer_ip: r.counter_printer_ip || '',
+      counter_printer_port: Number(r.counter_printer_port ?? 9100),
     });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 router.put('/settings', authenticate, async (req, res) => {
   try {
-    const { name, owner, city, logo_url, tax_rate, service_charge, default_delivery_partner, table_sections } = req.body;
+    const {
+      name,
+      owner,
+      city,
+      logo_url,
+      tax_rate,
+      service_charge,
+      default_delivery_partner,
+      table_sections,
+      kitchen_printer_ip,
+      kitchen_printer_port,
+      counter_printer_ip,
+      counter_printer_port,
+    } = req.body;
 
     const taxRate = tax_rate !== undefined ? Math.min(Math.max(Number(tax_rate), 0), 100) : null;
     const svcCharge = service_charge !== undefined ? Math.min(Math.max(Number(service_charge), 0), 100) : null;
+    const kitchenPrinterPort = kitchen_printer_port !== undefined ? Number(kitchen_printer_port) : null;
+    const counterPrinterPort = counter_printer_port !== undefined ? Number(counter_printer_port) : null;
 
     if (tax_rate !== undefined && isNaN(taxRate)) return res.status(400).json({ error: 'Invalid tax_rate' });
     if (service_charge !== undefined && isNaN(svcCharge)) return res.status(400).json({ error: 'Invalid service_charge' });
+    if (kitchen_printer_port !== undefined && (!Number.isInteger(kitchenPrinterPort) || kitchenPrinterPort < 1 || kitchenPrinterPort > 65535)) {
+      return res.status(400).json({ error: 'Invalid kitchen_printer_port' });
+    }
+    if (counter_printer_port !== undefined && (!Number.isInteger(counterPrinterPort) || counterPrinterPort < 1 || counterPrinterPort > 65535)) {
+      return res.status(400).json({ error: 'Invalid counter_printer_port' });
+    }
 
     let finalLogoUrl = logo_url;
     if (logo_url && logo_url.startsWith('data:')) {
@@ -317,8 +343,12 @@ router.put('/settings', authenticate, async (req, res) => {
         tax_rate = COALESCE($5, tax_rate),
         service_charge = COALESCE($6, service_charge),
         default_delivery_partner = COALESCE($7, default_delivery_partner),
-        table_sections = COALESCE($8::jsonb, table_sections)
-       WHERE id=$9`,
+        table_sections = COALESCE($8::jsonb, table_sections),
+        kitchen_printer_ip = COALESCE($9, kitchen_printer_ip),
+        kitchen_printer_port = COALESCE($10, kitchen_printer_port),
+        counter_printer_ip = COALESCE($11, counter_printer_ip),
+        counter_printer_port = COALESCE($12, counter_printer_port)
+       WHERE id=$13`,
       [
         name || null,
         owner || null,
@@ -328,12 +358,18 @@ router.put('/settings', authenticate, async (req, res) => {
         svcCharge,
         default_delivery_partner || null,
         sectionsJson,
+        kitchen_printer_ip !== undefined ? String(kitchen_printer_ip).trim() || null : null,
+        kitchenPrinterPort,
+        counter_printer_ip !== undefined ? String(counter_printer_ip).trim() || null : null,
+        counterPrinterPort,
         req.user.restaurantId,
       ]
     );
 
     const { rows } = await query(
-      `SELECT name, owner, city, logo_url, tax_rate, service_charge, default_delivery_partner, table_sections FROM restaurants WHERE id=$1`,
+      `SELECT name, owner, city, logo_url, tax_rate, service_charge, default_delivery_partner, table_sections,
+              kitchen_printer_ip, kitchen_printer_port, counter_printer_ip, counter_printer_port
+       FROM restaurants WHERE id=$1`,
       [req.user.restaurantId]
     );
     const r = rows[0];
@@ -346,6 +382,10 @@ router.put('/settings', authenticate, async (req, res) => {
       service_charge: Number(r.service_charge),
       default_delivery_partner: r.default_delivery_partner,
       table_sections: Array.isArray(r.table_sections) ? r.table_sections : [],
+      kitchen_printer_ip: r.kitchen_printer_ip || '',
+      kitchen_printer_port: Number(r.kitchen_printer_port ?? 9100),
+      counter_printer_ip: r.counter_printer_ip || '',
+      counter_printer_port: Number(r.counter_printer_port ?? 9100),
     });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

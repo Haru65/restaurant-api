@@ -17,7 +17,9 @@ For Render deployment, use `render.yaml` with `restaurant-api` as the service ro
 
 ## Printer Setup
 
-KOT and bill printing are disabled unless `PRINTER_ENABLED=true` is set in the running backend environment. Each restaurant must also have `kitchen_printer_ip` and `kitchen_printer_port` configured in the `restaurants` table before KOT jobs can reach the kitchen printer.
+KOT and bill printing are disabled unless `PRINTER_ENABLED=true` is set in the running backend environment. For a single shared printer, set `KITCHEN_PRINTER_IP` and optionally `KITCHEN_PRINTER_PORT` on the server. Per-restaurant `kitchen_printer_ip` and `kitchen_printer_port` values still override the server default when present.
+
+Run `npm run migrate:printers` to add the printer settings columns to an existing database before saving printer values from the settings page.
 
 ## Main Route Groups
 

@@ -12,6 +12,22 @@ const disabledPrinterResult = (type) => {
   return { success: true, skipped: true, reason: 'PRINTER_ENABLED is not true' };
 };
 
+const printerTarget = (restaurant, type) => {
+  const isKitchen = type === 'kitchen';
+  const ip = isKitchen
+    ? restaurant.kitchen_printer_ip || process.env.KITCHEN_PRINTER_IP
+    : restaurant.counter_printer_ip || process.env.COUNTER_PRINTER_IP;
+  const configuredPort = isKitchen
+    ? restaurant.kitchen_printer_port || process.env.KITCHEN_PRINTER_PORT
+    : restaurant.counter_printer_port || process.env.COUNTER_PRINTER_PORT;
+
+  return {
+    ip,
+    port: Number(configuredPort || 9100),
+    source: ip === (isKitchen ? restaurant.kitchen_printer_ip : restaurant.counter_printer_ip) ? 'restaurant' : 'server'
+  };
+};
+
 export const printerService = {
   /**
    * Print Kitchen Order Ticket (KoT) to kitchen printer
@@ -25,19 +41,20 @@ export const printerService = {
         return disabledPrinterResult('KoT');
       }
 
-      if (!restaurant.kitchen_printer_ip || !restaurant.kitchen_printer_port) {
-        throw new Error('Kitchen printer not configured for this restaurant');
+      const target = printerTarget(restaurant, 'kitchen');
+      if (!target.ip) {
+        throw new Error('Kitchen printer not configured. Set KITCHEN_PRINTER_IP on the server or kitchen_printer_ip for this restaurant.');
       }
 
       const kotContent = generateKoTContent(order, restaurant);
       await sendToPrinter(
-        restaurant.kitchen_printer_ip,
-        restaurant.kitchen_printer_port,
+        target.ip,
+        target.port,
         kotContent
       );
 
-      console.log(`✅ KoT printed for restaurant ${restaurant.id}: ${restaurant.name}`);
-      return { success: true, printer: 'kitchen', restaurant: restaurant.name };
+      console.log(`✅ KoT printed for restaurant ${restaurant.id}: ${restaurant.name} via ${target.source} printer ${target.ip}:${target.port}`);
+      return { success: true, printer: 'kitchen', restaurant: restaurant.name, target: `${target.ip}:${target.port}` };
     } catch (error) {
       console.error(`❌ KoT print failed for ${restaurant.name}:`, error.message);
       return { success: false, error: error.message, restaurant: restaurant.name };
@@ -57,19 +74,20 @@ export const printerService = {
         return disabledPrinterResult('Bill');
       }
 
-      if (!restaurant.counter_printer_ip || !restaurant.counter_printer_port) {
-        throw new Error('Counter printer not configured for this restaurant');
+      const target = printerTarget(restaurant, 'counter');
+      if (!target.ip) {
+        throw new Error('Counter printer not configured. Set COUNTER_PRINTER_IP on the server or counter_printer_ip for this restaurant.');
       }
 
       const billContent = generateBillContent(order, payment, restaurant);
       await sendToPrinter(
-        restaurant.counter_printer_ip,
-        restaurant.counter_printer_port,
+        target.ip,
+        target.port,
         billContent
       );
 
-      console.log(`✅ Bill printed for restaurant ${restaurant.id}: ${restaurant.name}`);
-      return { success: true, printer: 'counter', restaurant: restaurant.name };
+      console.log(`✅ Bill printed for restaurant ${restaurant.id}: ${restaurant.name} via ${target.source} printer ${target.ip}:${target.port}`);
+      return { success: true, printer: 'counter', restaurant: restaurant.name, target: `${target.ip}:${target.port}` };
     } catch (error) {
       console.error(`❌ Bill print failed for ${restaurant.name}:`, error.message);
       return { success: false, error: error.message, restaurant: restaurant.name };
