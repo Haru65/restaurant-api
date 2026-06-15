@@ -519,11 +519,23 @@ router.put('/superadmin/tenants/:id', ...sa, handle('update tenant', async (req,
       name=COALESCE($1,name), slug=COALESCE($2,slug), tenant_type=COALESCE($3,tenant_type),
       owner=COALESCE($4,owner), owner_email=COALESCE($5,owner_email),
       city=COALESCE($6,city), address=COALESCE($7,address), phone=COALESCE($8,phone),
-      logo_url=COALESCE($9,logo_url), updated_at=NOW()
-    WHERE id=$10
+      plan=COALESCE($9,plan), logo_url=COALESCE($10,logo_url), updated_at=NOW()
+    WHERE id=$11
   `, [
     req.body.name, slug, type, req.body.ownerName || req.body.owner, req.body.ownerEmail,
-    req.body.city, req.body.address, req.body.phone, uploadedLogo, id
+    req.body.city, req.body.address, req.body.phone, req.body.subscription?.plan || req.body.plan, uploadedLogo, id
+  ]);
+  await query(`
+    UPDATE subscriptions SET
+      restaurant_name=COALESCE($1,restaurant_name), owner=COALESCE($2,owner),
+      plan=COALESCE($3,plan), status=COALESCE($4,status)
+    WHERE restaurant_id=$5
+  `, [
+    req.body.name,
+    req.body.ownerName || req.body.owner,
+    req.body.subscription?.plan || req.body.plan,
+    req.body.subscription?.status ? subscriptionStatus(req.body.subscription.status) : null,
+    id
   ]);
   res.json(await findTenant(id));
 }));
