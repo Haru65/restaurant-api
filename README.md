@@ -21,6 +21,10 @@ KOT and bill printing are disabled unless `PRINTER_ENABLED=true` is set in the r
 
 Run `npm run migrate:printers` to add the printer settings columns to an existing database before saving printer values from the settings page.
 
+## Android Bluetooth Bill Printing
+
+The Android PWA can open the manufacturer Bluetooth Print app with `my.bluetoothprint.scheme://`. Set `PUBLIC_API_BASE_URL`, `PRINT_TOKEN_SECRET`, and `PRINT_TOKEN_EXPIRY_SECONDS` in production. Staff request a short-lived URL from `POST /api/print/orders/:orderId/bluetooth-url`; the Bluetooth Print app then fetches `GET /api/print/orders/:orderId/bluetooth?token=...`. Use `GET /api/print/orders/:orderId/bluetooth-preview` while logged in to preview the receipt JSON in a browser.
+
 ## Main Route Groups
 
 - Restaurant operations: `/auth`, `/profile`, `/menu`, `/tables`, `/orders`, `/reservations`, `/deliveries`

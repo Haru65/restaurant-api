@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.mjs",
     "dev": "node --watch index.mjs",
-    "check": "node --check index.mjs && node --check schema.mjs && node --check middleware/auth.mjs && node --check middleware/upload.mjs && node --check routes/auth.mjs && node --check routes/menu.mjs && node --check routes/tables.mjs && node --check routes/orders.mjs && node --check routes/reservations.mjs && node --check routes/deliveries.mjs && node --check routes/misc.mjs && node --check routes/recipes.mjs && node --check routes/unified-superadmin.mjs && node --check routes/superadmin.mjs && node --check services/printer.mjs && node --check migrations/add-printer-settings.mjs",
+    "check": "node --check index.mjs && node --check schema.mjs && node --check middleware/auth.mjs && node --check middleware/upload.mjs && node --check routes/auth.mjs && node --check routes/menu.mjs && node --check routes/tables.mjs && node --check routes/orders.mjs && node --check routes/print.mjs && node --check routes/reservations.mjs && node --check routes/deliveries.mjs && node --check routes/misc.mjs && node --check routes/recipes.mjs && node --check routes/unified-superadmin.mjs && node --check routes/superadmin.mjs && node --check services/printer.mjs && node --check services/bluetoothPrintReceiptBuilder.mjs && node --check utils/printToken.mjs && node --check migrations/add-printer-settings.mjs",
     "migrate:printers": "node migrations/add-printer-settings.mjs"
   },
   "dependencies": {
