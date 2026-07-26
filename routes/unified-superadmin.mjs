@@ -22,7 +22,26 @@ const date = (value) => {
 const timestamp = (value) => value ? new Date(value).toISOString() : null;
 const mask = (value) => value ? '************' : null;
 const orderType = (value) => value === 'take-away' ? 'takeaway' : value;
-const paymentStatus = (value) => ['paid', 'completed'].includes(String(value).toLowerCase()) ? 'paid' : 'unpaid';
+const PAID_PAYMENT_STATUSES = ['paid', 'completed', 'complete', 'success', 'successful', 'captured', 'authorized', 'txn_success'];
+const UNPAID_PAYMENT_STATUSES = ['unpaid', 'pending', 'created', 'initiated', 'draft'];
+const FAILED_PAYMENT_STATUSES = ['failed', 'failure', 'cancelled', 'canceled', 'txn_failure'];
+const sqlList = (values) => values.map((value) => `'${value}'`).join(', ');
+const normalizedPaymentSql = (field) => `COALESCE(LOWER(${field}), 'pending')`;
+const paidPaymentSql = (field) => `${normalizedPaymentSql(field)} IN (${sqlList(PAID_PAYMENT_STATUSES)})`;
+const unpaidPaymentSql = (field) => `${normalizedPaymentSql(field)} NOT IN (${sqlList(PAID_PAYMENT_STATUSES)})`;
+const paymentStatus = (value) => {
+  const status = String(value || '').toLowerCase();
+  if (PAID_PAYMENT_STATUSES.includes(status)) return 'paid';
+  if (UNPAID_PAYMENT_STATUSES.includes(status)) return 'unpaid';
+  if (FAILED_PAYMENT_STATUSES.includes(status)) return 'failed';
+  return status || 'unpaid';
+};
+const paymentMethod = (value) => {
+  const method = String(value || '').toLowerCase();
+  if (['paytm', 'gpay', 'googlepay', 'phonepe', 'bhim'].includes(method)) return 'upi';
+  if (method === 'razorpay') return 'online';
+  return method || 'unknown';
+};
 const displayStatus = (value) => {
   const status = String(value || 'inactive').toLowerCase();
   return `${status[0].toUpperCase()}${status.slice(1)}`;
@@ -193,7 +212,7 @@ const formatOrder = (row) => ({
   tenantType: row.tenant_type || 'restaurant',
   amount: number(row.total),
   paymentStatus: paymentStatus(row.payment_status),
-  paymentMethod: row.payment_method || 'unknown',
+  paymentMethod: paymentMethod(row.payment_method),
   orderType: orderType(row.order_type),
   status: row.status,
   createdAt: timestamp(row.created_at)
@@ -271,8 +290,8 @@ const orderAggregate = async (source = {}) => {
     SELECT
       COUNT(o.id)::INTEGER AS total_orders,
       COALESCE(SUM(o.total), 0) AS total_revenue,
-      COALESCE(SUM(CASE WHEN LOWER(o.payment_status) IN ('paid', 'completed') THEN o.total ELSE 0 END), 0) AS paid_revenue,
-      COALESCE(SUM(CASE WHEN LOWER(o.payment_status) NOT IN ('paid', 'completed') THEN o.total ELSE 0 END), 0) AS unpaid_revenue
+      COALESCE(SUM(CASE WHEN ${paidPaymentSql('o.payment_status')} THEN o.total ELSE 0 END), 0) AS paid_revenue,
+      COALESCE(SUM(CASE WHEN ${unpaidPaymentSql('o.payment_status')} THEN o.total ELSE 0 END), 0) AS unpaid_revenue
     FROM orders o
     JOIN restaurants r ON r.id = o.restaurant_id
     ${where(clauses)}
@@ -671,8 +690,8 @@ router.get('/superadmin/orders', ...sa, handle('get orders', async (req, res) =>
   if (req.query.paymentStatus) {
     const status = String(req.query.paymentStatus).toLowerCase();
     clauses.push(status === 'paid'
-      ? `LOWER(o.payment_status) IN ('paid', 'completed')`
-      : `LOWER(o.payment_status) NOT IN ('paid', 'completed')`);
+      ? paidPaymentSql('o.payment_status')
+      : unpaidPaymentSql('o.payment_status'));
   }
   if (req.query.orderType) {
     params.push(req.query.orderType === 'takeaway' ? 'take-away' : req.query.orderType);
